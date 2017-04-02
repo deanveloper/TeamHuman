@@ -27,17 +27,29 @@ func main() {
 	for ;; {
 		// upvote all available pages
 		for i := 1; i < 10; i++ {
-			votePage(i)
+			votePage(i, false)
 		}
 		println("Entering sleep for a quick five minutes")
 		time.Sleep(5 * time.Minute)
 	}
 }
 
-func votePage(num int) {
+func votePage(num int, retry bool) {
 	println("Page: " + strconv.Itoa(num))
 
 	resp := request("GET", "gallery/t/teamhuman/time/" + string(num), nil)
+
+	if resp == nil {
+		println("No response!" )
+
+		if !retry {
+			println("Retrying...")
+			votePage(num, true)
+		} else {
+			println("No more retries.")
+			return
+		}
+	}
 
 	var posts map[string] interface{} // make a map of key:string value:interface{}
 	err := json.Unmarshal(resp, &posts)
@@ -53,9 +65,18 @@ func votePage(num int) {
 		if ok {
 			if item["vote"] != "up" {
 				itemResp := request("POST", fmt.Sprintf("gallery/%s/vote/up", item["id"]), nil)
+
+				// if time out, retry
 				if itemResp == nil {
-					println("oh jeez")
+					fmt.Printf("No response for %s, retrying!", item["id"])
+					itemResp = request("POST", fmt.Sprintf("gallery/%s/vote/up", item["id"]), nil)
+
+					if itemResp == nil {
+						println("Giving up on retrying.")
+						continue
+					}
 				}
+
 				var itemJson map[string] interface{}
 				err := json.Unmarshal(itemResp, &itemJson)
 				if err != nil {
