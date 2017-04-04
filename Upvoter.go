@@ -1,14 +1,14 @@
 package main
 
 import (
-    "net/http"
-    "net/url"
-    "strings"
-    "time"
-    "io/ioutil"
     "encoding/json"
     "fmt"
+    "io/ioutil"
+    "net/http"
+    "net/url"
     "strconv"
+    "strings"
+    "time"
 )
 
 var AccessToken string = ""
